@@ -7,3 +7,11 @@
 
 #include "neural_net.hpp"
 
+using namespace std;
+
+NeuralNet::NeuralNet() {
+    
+    cout << "Neural Net: Hello" << endl;
+    
+}
+

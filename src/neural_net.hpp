@@ -8,6 +8,11 @@
 #ifndef neural_net_hpp
 #define neural_net_hpp
 
-#include <stdio.h>
+#include <iostream>
 
 #endif /* neural_net_hpp */
+
+class NeuralNet {
+public:
+    NeuralNet();
+};
