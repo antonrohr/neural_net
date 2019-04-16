@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 # --- Project specific data
 project(neural_net)
 
-set(PROJECT_SOURCES src/main.cpp src/neural_net.hpp src/neural_net.cpp)
+set(PROJECT_SOURCES src/main.cpp src/neural_net.hpp src/neural_net.cpp src/node.hpp src/node.cpp)
 
 
 # --- Project specific packages
