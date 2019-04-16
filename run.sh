@@ -4,4 +4,4 @@ mkdir -p build/make
 cd build/make
 cmake ../..
 make
-./neural_net_cpp
+./neural_net
