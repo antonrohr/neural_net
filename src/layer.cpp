@@ -70,3 +70,13 @@ void Layer::adjustWeights() {
     }
     
 }
+
+string Layer::serialize()
+{
+    string text = "layer\n";
+    for (int i = 0; i < nodes.size(); i++) {
+        text += nodes[i].serialize();
+    }
+    
+    return text;
+}

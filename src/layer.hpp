@@ -23,6 +23,7 @@ public:
     void print() const;
     std::vector<double> train(const std::vector<double>& previousLayerValues, const std::vector<double>& wantedValues);
     void adjustWeights();
+    std::string serialize();
 };
 
 #endif /* layer_hpp */

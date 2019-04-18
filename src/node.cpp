@@ -115,6 +115,10 @@ vector<double> Node::train(const vector<double>& previousLayerValues, const doub
 
 void Node::adjustWeights(){
     
+    if(trainingCounter == 0) {
+        return;
+    }
+    
     for (int i = 0; i < weights.size(); i++) {
         weights[i] -= accWeightNudges[i] / trainingCounter;
     }
@@ -124,4 +128,18 @@ void Node::adjustWeights(){
     accBiasNudge = 0;
     accWeightNudges = vector<double>(weights.size(), 0.0);
     
+}
+
+string Node::serialize()
+{
+    string text = to_string(bias);
+    text += " ";
+    
+    for (int i = 0; i < weights.size(); i++) {
+        text += " " + to_string(weights[i]);
+    }
+    
+    text += "\n";
+    
+    return text;
 }

@@ -28,7 +28,7 @@ NeuralNet::NeuralNet(int inputLength, int hiddenLayer, int hiddenLayerSize, int 
     layers.emplace_back(make_unique<Layer>(outputLength, previousSize));
 }
 
-vector<double> NeuralNet::compute(const std::vector<double>& inputs) const
+vector<double> NeuralNet::compute(const vector<double>& inputs) const
 {
     
     vector<double> results = inputs;
@@ -40,7 +40,7 @@ vector<double> NeuralNet::compute(const std::vector<double>& inputs) const
     return results;
 }
 
-double NeuralNet::computeError(const std::vector<double>& img, const uint8_t& label) const
+double NeuralNet::computeError(const vector<double>& img, const uint8_t& label) const
 {
     
     vector<double> results = compute(img);
@@ -57,7 +57,7 @@ double NeuralNet::computeError(const std::vector<double>& img, const uint8_t& la
     return result;
 }
 
-void NeuralNet::train(const std::vector<double> &img, const uint8_t& label)
+void NeuralNet::train(const vector<double> &img, const uint8_t& label)
 {
     
     vector<vector<double>> savedResults;
@@ -104,7 +104,7 @@ void NeuralNet::adjustWeights()
     
 }
 
-uint8_t NeuralNet::predict(const std::vector<double> &img) const
+uint8_t NeuralNet::predict(const vector<double> &img) const
 {
     
     vector<double> results = compute(img);
@@ -113,4 +113,62 @@ uint8_t NeuralNet::predict(const std::vector<double> &img) const
     
     return (uint8_t) maxIndex;
     
+}
+
+void NeuralNet::train(const vector<vector<double> > &images, const vector<uint8_t> &label, const int &batchSize) {
+    
+    assert(images.size() == label.size());
+    
+    for (int i = 0; i < images.size(); i++) {
+        
+        if (i % batchSize == 0){
+            adjustWeights();
+        }
+        
+        train(images[i], label[i]);
+        
+    }
+    
+    adjustWeights();
+    
+}
+
+double NeuralNet::computeAvgError(const vector<vector<double> > &images, const vector<uint8_t> &label)
+{
+    
+    assert(images.size() == label.size());
+    
+    double accError = 0;
+    
+    for (int i = 0; i < images.size(); i++) {
+        accError += computeError(images[i], label[i]);
+    }
+    
+    return accError / images.size();
+    
+}
+
+void NeuralNet::writeToFile(string filePath) {
+    
+    string text;
+    
+    for (int i = 0; i < layers.size(); i++) {
+        Layer& layer = *layers[i];
+        text += layer.serialize();
+    }
+    
+    ofstream file;
+    file.open(filePath);
+    file << text;
+    file.close();
+    
+}
+
+void NeuralNet::readFromFile(string filePath)
+{
+    ifstream file(filePath);
+    string text( (istreambuf_iterator<char>(file)), (istreambuf_iterator<char>()) );
+    
+    cout << text;
+    // TODO
 }

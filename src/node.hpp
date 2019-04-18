@@ -29,6 +29,7 @@ public:
     void print() const;
     std::vector<double> train(const std::vector<double>& previousLayerValues, const double& wantedResult);
     void adjustWeights();
+    std::string serialize();
 };
 
 #endif /* node_hpp */

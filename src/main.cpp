@@ -13,10 +13,21 @@ double getRandom(){
     return dist(mt);
 }
 
-void imgNormalize(const vector<uint8_t>& img, vector<double>& out) {
+void normalizeImages(const vector<vector<uint8_t>>& images, vector<vector<double>>& out) {
     
-    transform(img.begin(), img.end(), out.begin(),
-              [](uint8_t val) -> double { return val / 255.0; });
+    assert(images.size() == out.size());
+    
+    for (int i = 0; i < images.size(); i++) {
+        
+        const vector<uint8_t>& imgRaw = images[i];
+        vector<double>& img = out[i];
+        
+        transform(imgRaw.begin(), imgRaw.end(), img.begin(),
+                  [](uint8_t val) -> double { return val / 255.0; });
+        
+    }
+    
+    
     
 }
 
@@ -27,68 +38,53 @@ int main(){
     mnist::MNIST_dataset<vector, vector<uint8_t>, uint8_t> dataset =
         mnist::read_dataset<vector, vector, uint8_t, uint8_t>(MNIST_DATA_LOCATION);
     
-    vector<double> img(784);
+    typedef vector<double> image;
     
+    vector<image> trainingImages(dataset.training_images.size(), image(784));
+    normalizeImages(dataset.training_images, trainingImages);
     
+    vector<uint8_t>& trainingLabels = dataset.training_labels;
     
-    
-    
-    
-    int runs = dataset.training_images.size();
+    string filePath = "/Users/antonrohr/git/neural_net/data/weights.txt";
+    neuralNet.writeToFile(filePath);
+    neuralNet.readFromFile(filePath);
 
-    double accError = 0;
-    for (int i = 0; i < runs; i++) {
-        imgNormalize(dataset.training_images[i], img);
-        uint8_t& label = dataset.training_labels[i];
-        accError += neuralNet.computeError(img, label);
-    }
-    cout << "AvgError before: " << accError / runs << endl;
+    return 0;
+    
+    double avgError = neuralNet.computeAvgError(trainingImages, trainingLabels);
+    
+    
+    cout << "AvgError before: " << avgError << endl;
 
-    for (int i = 0; i < runs; i++) {
-        if (i != 0 && i % 100 == 0) {
-            neuralNet.adjustWeights();
-        }
-        
-        imgNormalize(dataset.training_images[i], img);
-        uint8_t& label = dataset.training_labels[i];
-        neuralNet.train(img, label);
-        
-    }
-
-    neuralNet.adjustWeights();
-
-    accError = 0.0;
-    for (int i = 0; i < runs; i++) {
-        imgNormalize(dataset.training_images[i], img);
-        uint8_t& label = dataset.training_labels[i];
-        accError += neuralNet.computeError(img, label);
-    }
-    cout << "AvgError after: " << accError / runs << endl;
+    neuralNet.train(trainingImages, trainingLabels, 1000);
     
     
     
+    avgError = neuralNet.computeAvgError(trainingImages, trainingLabels);
+    
+    cout << "AvgError after: " << avgError << endl;
+
+
+
     // prediction test set
-    int predRuns = dataset.test_images.size();
+    vector<image> testImages(dataset.test_images.size(), image(784));
+    normalizeImages(dataset.test_images, testImages);
+    vector<uint8_t>& testLabels = dataset.test_labels;
+    
     int counterWrong = 0;
-    accError = 0;
-    
-    for (int i = 0; i < predRuns; i++) {
-        
-        imgNormalize(dataset.test_images[i], img);
-        uint8_t& label = dataset.test_labels[i];
-        
-        uint8_t prediction = neuralNet.predict(img);
-        
-        if (label != prediction) {
+
+    for (int i = 0; i < testImages.size(); i++) {
+
+        uint8_t prediction = neuralNet.predict(testImages[i]);
+
+        if (testLabels[i] != prediction) {
             counterWrong++;
-//            cout << "label: " << (int) label << " prediction: " << (int) prediction << endl;
         }
-        
-        accError += neuralNet.computeError(img, label);
-        
+
     }
-    
-    cout << predRuns << " predictions Runs. Of those " << counterWrong << " wrongly predicted" << endl;
-    cout << "average prediction error: " << accError / predRuns << endl;
+
+    cout << testImages.size() << " predictions Runs. Of those " << counterWrong << " wrongly predicted" << endl;
+    avgError = neuralNet.computeAvgError(testImages, testLabels);
+    cout << "average prediction error: " << avgError << endl;
     
 }
