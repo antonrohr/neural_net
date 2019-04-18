@@ -16,7 +16,7 @@
 class InputLayer: public Layer {
 public:
     InputLayer(int size);
-    std::vector<double> compute(std::vector<double> values);
+    std::vector<double> compute(const std::vector<double>& values) const;
 };
 
 #endif /* input_layer_hpp */

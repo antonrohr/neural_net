@@ -13,6 +13,10 @@ InputLayer::InputLayer(int size)
 : Layer(0, 1)
 {}
 
-vector<double> InputLayer::compute(std::vector<double> values) {
+vector<double> InputLayer::compute(const std::vector<double>& values) const
+{
+    
+//    cout << "called input layer!" << endl;
+    
     return values;
 }

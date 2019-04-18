@@ -19,8 +19,10 @@ protected:
 public:
     Layer(int size, int previousSize);
     virtual ~Layer();
-    virtual std::vector<double> compute(std::vector<double> values);
-    void print();
+    virtual std::vector<double> compute(const std::vector<double>& values) const;
+    void print() const;
+    std::vector<double> train(const std::vector<double>& previousLayerValues, const std::vector<double>& wantedValues);
+    void adjustWeights();
 };
 
 #endif /* layer_hpp */
