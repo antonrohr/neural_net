@@ -17,7 +17,7 @@ using namespace std;
 //, trainingCounter(0)
 //{}
 
-Node::Node(int numberOfWeights)
+Node::Node(const int numberOfWeights)
 : accWeightNudges(numberOfWeights, 0.0)
 , accBiasNudge(0.0)
 , trainingCounter(0)
@@ -26,6 +26,21 @@ Node::Node(int numberOfWeights)
         weights.push_back(getRandom());
     }
     bias = getRandom();
+}
+
+Node::Node(const vector<double> weightsData)
+: accWeightNudges(weightsData.size() - 1, 0.0) // - 1, because first value is bias
+, accBiasNudge(0.0)
+, trainingCounter(0)
+{
+    
+    bias = weightsData[0];
+    
+    // start at one, first value is bias
+    for (int i = 1; i < weightsData.size(); i++) {
+        weights.push_back(weightsData[i]);
+    }
+    
 }
 
 double sumOfProducts(const vector<double>& a, const vector<double>& b) {
@@ -130,10 +145,9 @@ void Node::adjustWeights(){
     
 }
 
-string Node::serialize()
+string Node::serialize() const
 {
     string text = to_string(bias);
-    text += " ";
     
     for (int i = 0; i < weights.size(); i++) {
         text += " " + to_string(weights[i]);

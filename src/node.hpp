@@ -24,12 +24,13 @@ class Node {
     static double getRandom();
 public:
 //    Node(std::vector<double> weights, double bias);
-    Node(int numberOfWeights);
+    Node(const int numberOfWeights);
+    Node(const std::vector<double> weightsData);
     double compute(const std::vector<double>& values) const;
     void print() const;
     std::vector<double> train(const std::vector<double>& previousLayerValues, const double& wantedResult);
     void adjustWeights();
-    std::string serialize();
+    std::string serialize() const;
 };
 
 #endif /* node_hpp */

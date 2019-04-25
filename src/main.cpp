@@ -24,16 +24,26 @@ void normalizeImages(const vector<vector<uint8_t>>& images, vector<vector<double
         
         transform(imgRaw.begin(), imgRaw.end(), img.begin(),
                   [](uint8_t val) -> double { return val / 255.0; });
-        
+
     }
+}
+
+string newFilePath() {
     
+    string filePath = "/Users/antonrohr/git/neural_net/data/weights_";
     
+    time_t currentMS = time(nullptr);
+    
+    return filePath + to_string(currentMS) + ".txt";
     
 }
 
 int main(){
 	
-    NeuralNet neuralNet = NeuralNet(784, 2, 16, 10);
+    string filePath = "/Users/antonrohr/git/neural_net/data/weights.txt";
+    
+    NeuralNet neuralNet = NeuralNet(filePath, 784);
+//    NeuralNet neuralNet = NeuralNet(784, 2, 16, 10);
     
     mnist::MNIST_dataset<vector, vector<uint8_t>, uint8_t> dataset =
         mnist::read_dataset<vector, vector, uint8_t, uint8_t>(MNIST_DATA_LOCATION);
@@ -45,26 +55,19 @@ int main(){
     
     vector<uint8_t>& trainingLabels = dataset.training_labels;
     
-    string filePath = "/Users/antonrohr/git/neural_net/data/weights.txt";
-    neuralNet.writeToFile(filePath);
-    neuralNet.readFromFile(filePath);
-
-    return 0;
-    
     double avgError = neuralNet.computeAvgError(trainingImages, trainingLabels);
     
-    
     cout << "AvgError before: " << avgError << endl;
-
+    
     neuralNet.train(trainingImages, trainingLabels, 1000);
-    
-    
     
     avgError = neuralNet.computeAvgError(trainingImages, trainingLabels);
     
     cout << "AvgError after: " << avgError << endl;
 
-
+    neuralNet.writeToFile(newFilePath());
+    
+    return 0;
 
     // prediction test set
     vector<image> testImages(dataset.test_images.size(), image(784));

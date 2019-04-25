@@ -20,3 +20,10 @@ vector<double> InputLayer::compute(const std::vector<double>& values) const
     
     return values;
 }
+
+string InputLayer::serialize() const
+{
+    
+    return "";
+    
+}

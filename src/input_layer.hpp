@@ -17,6 +17,7 @@ class InputLayer: public Layer {
 public:
     InputLayer(int size);
     std::vector<double> compute(const std::vector<double>& values) const;
+    std::string serialize() const;
 };
 
 #endif /* input_layer_hpp */

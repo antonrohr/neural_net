@@ -11,7 +11,7 @@
 
 using namespace std;
 
-NeuralNet::NeuralNet(int inputLength, int hiddenLayer, int hiddenLayerSize, int outputLength)
+NeuralNet::NeuralNet(const int inputLength, const int hiddenLayer, const int hiddenLayerSize, const int outputLength)
 {
 
     // input Layer
@@ -26,6 +26,34 @@ NeuralNet::NeuralNet(int inputLength, int hiddenLayer, int hiddenLayerSize, int 
     
     // outputLayer
     layers.emplace_back(make_unique<Layer>(outputLength, previousSize));
+}
+
+NeuralNet::NeuralNet(string filePath, const int inputLength) {
+    
+    //input Layer
+    layers.emplace_back(make_unique<InputLayer>(inputLength));
+    
+    ifstream file(filePath);
+    string text( (istreambuf_iterator<char>(file)), (istreambuf_iterator<char>()) );
+    istringstream stream(text);
+    string line;
+    vector<string> layersWeights;
+    while (getline(stream, line)) {
+        if (line == "layer") {
+            layersWeights.emplace_back("");
+        } else {
+            layersWeights[layersWeights.size() - 1] += line + "\n";
+        }
+    }
+    
+    for (int i = 0; i < layersWeights.size(); i++) {
+        layers.emplace_back(make_unique<Layer>(layersWeights[i]));
+    }
+    
+//    cout << text;
+    // TODO
+    
+    
 }
 
 vector<double> NeuralNet::compute(const vector<double>& inputs) const
@@ -164,11 +192,4 @@ void NeuralNet::writeToFile(string filePath) {
     
 }
 
-void NeuralNet::readFromFile(string filePath)
-{
-    ifstream file(filePath);
-    string text( (istreambuf_iterator<char>(file)), (istreambuf_iterator<char>()) );
-    
-    cout << text;
-    // TODO
-}
+

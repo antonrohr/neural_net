@@ -10,10 +10,31 @@
 
 using namespace std;
 
-Layer::Layer(int size, int previousSize) {
+Layer::Layer(const int size, const int previousSize) {
     for (int i = 0; i < size; i++) {
-        nodes.push_back(Node(previousSize));
+        nodes.emplace_back(Node(previousSize));
     }
+}
+
+Layer::Layer(const string layerData) {
+    
+    istringstream layerStream(layerData);
+    string weights;
+    
+    while (getline(layerStream , weights)) {
+        
+        istringstream weightsStream(weights);
+        string weight;
+        
+        vector<double> weightsData;
+        
+        while (getline(weightsStream, weight, ' ')) {
+            weightsData.emplace_back(stod(weight));
+        }
+        
+        nodes.emplace_back(Node(weightsData));
+    }
+    
 }
 
 Layer::~Layer()
@@ -71,7 +92,7 @@ void Layer::adjustWeights() {
     
 }
 
-string Layer::serialize()
+string Layer::serialize() const
 {
     string text = "layer\n";
     for (int i = 0; i < nodes.size(); i++) {
