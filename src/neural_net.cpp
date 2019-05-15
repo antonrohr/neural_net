@@ -8,134 +8,73 @@
 #include "neural_net.hpp"
 
 
-
 using namespace std;
 
 NeuralNet::NeuralNet(const int inputLength, const int hiddenLayer, const int hiddenLayerSize, const int outputLength)
+: epochs(0)
+, outputLayer(outputLength, hiddenLayerSize)
 {
-
-    // input Layer
-    layers.emplace_back(make_unique<InputLayer>(inputLength));
-    
-    // hidden Layer
+    //hiddenLayer
     int previousSize = inputLength;
     for (int i = 0; i < hiddenLayer; i++) {
-        layers.emplace_back(make_unique<Layer>(hiddenLayerSize, previousSize));
+        hiddenLayers.emplace_back(HiddenLayer(hiddenLayerSize, previousSize));
         previousSize = hiddenLayerSize;
     }
-    
-    // outputLayer
-    layers.emplace_back(make_unique<Layer>(outputLength, previousSize));
 }
 
-NeuralNet::NeuralNet(string filePath, const int inputLength) {
+NeuralNet::NeuralNet(string filePath, const int inputLength)
+{
     
-    //input Layer
-    layers.emplace_back(make_unique<InputLayer>(inputLength));
-    
+    // file to vector of strings
     ifstream file(filePath);
     string text( (istreambuf_iterator<char>(file)), (istreambuf_iterator<char>()) );
     istringstream stream(text);
     string line;
     vector<string> layersWeights;
     while (getline(stream, line)) {
-        if (line == "layer") {
+        if (line.rfind("epochs", 0) != string::npos) {
+            string val = line.substr(7);
+            cout << "epochs found; val: " << val << endl;
+            epochs = stoi(val);
+        } else if (line == "layer") {
             layersWeights.emplace_back("");
         } else {
             layersWeights[layersWeights.size() - 1] += line + "\n";
         }
     }
     
-    for (int i = 0; i < layersWeights.size(); i++) {
-        layers.emplace_back(make_unique<Layer>(layersWeights[i]));
+    for (int i = 0; i < layersWeights.size() - 1; i++) {
+        hiddenLayers.emplace_back(HiddenLayer(layersWeights[i]));
     }
+    
+    outputLayer = OutputLayer(layersWeights[layersWeights.size() - 1]);
     
 //    cout << text;
     // TODO
     
-    
 }
 
-vector<double> NeuralNet::compute(const vector<double>& inputs) const
+double NeuralNet::computeError(const vector<double>& input, const uint8_t& label)
 {
-    
-    vector<double> results = inputs;
-    
-    for(const unique_ptr<Layer>& layerPtr: layers) {
-        results = layerPtr->compute(results);
-    }
-    
-    return results;
-}
 
-double NeuralNet::computeError(const vector<double>& img, const uint8_t& label) const
-{
-    
-    vector<double> results = compute(img);
+    vector<double> results = forwardPropagate(input);
     double result = 0;
-    
-    for (int i = 0; i < 10; i++) {
+
+    for (uint8_t i = 0; i < 10; i++) {
         double tmp = results[i];
         if (i == label) {
             tmp -= 1.0;
         }
         result += pow(tmp, 2);
     }
-    
+
     return result;
 }
 
-void NeuralNet::train(const vector<double> &img, const uint8_t& label)
+uint8_t NeuralNet::predict(const vector<double> &input)
 {
     
-    vector<vector<double>> savedResults;
-    
-    for (int i = 0; i < layers.size(); i++) {
-        Layer& layer = *layers[i];
-        
-        if (i == 0) {
-            savedResults.push_back(layer.compute(img));
-        } else {
-            savedResults.push_back(layer.compute(savedResults.back()));
-        }
-    }
-    
-    vector<double> wantedResults;
-    for (uint8_t i = 0; i < 10; i++) {
-        if (i == label) {
-            wantedResults.push_back(1.0);
-        } else {
-            wantedResults.push_back(0.0);
-        }
-    }
-    
-    for (int i = layers.size() - 1; i > 0 ; --i) {
-        Layer& layer = *layers[i];
-        
-        assert(savedResults[i].size() == wantedResults.size());
-        
-        wantedResults = layer.train(savedResults[i-1], wantedResults);
-        
-    }
-    
-}
-
-void NeuralNet::adjustWeights()
-{
-    
-    for (int i = 1; i < layers.size(); i++) {
-        
-        Layer& layer = *layers[i];
-        
-        layer.adjustWeights();
-    }
-    
-}
-
-uint8_t NeuralNet::predict(const vector<double> &img) const
-{
-    
-    vector<double> results = compute(img);
+    vector<double> results = forwardPropagate(input);
     
     int maxIndex = max_element(results.begin(), results.end()) - results.begin();
     
@@ -143,47 +82,35 @@ uint8_t NeuralNet::predict(const vector<double> &img) const
     
 }
 
-void NeuralNet::train(const vector<vector<double> > &images, const vector<uint8_t> &label, const int &batchSize) {
-    
-    assert(images.size() == label.size());
-    
-    for (int i = 0; i < images.size(); i++) {
-        
-        if (i % batchSize == 0){
-            adjustWeights();
-        }
-        
-        train(images[i], label[i]);
-        
-    }
-    
-    adjustWeights();
-    
-}
+double NeuralNet::trainEpoch(const vector<vector<double> > &input, const vector<uint8_t> &label, const double learningRate) {
 
-double NeuralNet::computeAvgError(const vector<vector<double> > &images, const vector<uint8_t> &label)
-{
+    assert(input.size() == label.size());
+
+    double accumulatedError = 0.0;
     
-    assert(images.size() == label.size());
-    
-    double accError = 0;
-    
-    for (int i = 0; i < images.size(); i++) {
-        accError += computeError(images[i], label[i]);
+    for (int i = 0; i < input.size(); i++) {
+
+        accumulatedError += computeError(input[i], label[i]);
+        backwardPropagate(label[i]);
+        updateWeights(input[i], learningRate);
+
     }
     
-    return accError / images.size();
-    
+    epochs++;
+
+    return accumulatedError / input.size();
+
 }
 
 void NeuralNet::writeToFile(string filePath) {
     
-    string text;
+    string text = "epochs " + to_string(epochs) + "\n";
     
-    for (int i = 0; i < layers.size(); i++) {
-        Layer& layer = *layers[i];
-        text += layer.serialize();
+    for (int i = 0; i < hiddenLayers.size(); i++) {
+        text += hiddenLayers[i].serialize();
     }
+    
+    text += outputLayer.serialize();
     
     ofstream file;
     file.open(filePath);
@@ -192,4 +119,85 @@ void NeuralNet::writeToFile(string filePath) {
     
 }
 
+vector<double> NeuralNet::forwardPropagate(const vector<double>& inputs)
+{
+    
+    vector<double> results = inputs;
+    
+    for (int i = 0; i < hiddenLayers.size(); i++) {
+        results = hiddenLayers[i].forwardPropagate(results);
+    }
+    
+    results = outputLayer.forwardPropagate(results);
+    
+    return results;
+}
 
+void NeuralNet::backwardPropagate(vector<double>& expected)
+{
+    
+    outputLayer.backwardPropagate(expected);
+    
+    Layer* nextLayer = &outputLayer;
+    
+    for (int i = hiddenLayers.size() - 1; i >= 0; i--) {
+        
+        hiddenLayers[i].backwardPropagate(*nextLayer);
+        
+        nextLayer = &hiddenLayers[i];
+        
+    }
+}
+
+void NeuralNet::backwardPropagate(uint8_t expected)
+{
+    
+    vector<double> expectedValues;
+    for (int i = 0; i < 10; i++) {
+        if (i == (int) expected) {
+            expectedValues.push_back(1.0);
+        } else {
+            expectedValues.push_back(0.0);
+        }
+    }
+    
+    backwardPropagate(expectedValues);
+}
+
+void NeuralNet::updateWeights(const vector<double>& input, const double learningRate)
+{
+    
+    vector<double> inputs = input;
+    
+    for (int i = 0; i < hiddenLayers.size(); i++) {
+        inputs = hiddenLayers[i].updateWeights(inputs, learningRate);
+    }
+    
+    outputLayer.updateWeights(inputs, learningRate);
+    
+}
+
+int NeuralNet::getEpochs() const
+{
+    return epochs;
+}
+
+double NeuralNet::test(const vector<vector<double> > &testImages, vector<uint8_t>& testLabels)
+{
+    assert(testImages.size() == testLabels.size());
+    
+    int wrongCounter = 0;
+    
+    for (int i = 0; i < testImages.size(); i++) {
+        
+        uint8_t prediction = predict(testImages[i]);
+        
+        if (prediction != testLabels[i]) {
+            wrongCounter++;
+        }
+        
+    }
+    
+    return (double) wrongCounter * 100 / testImages.size();
+    
+}

@@ -11,26 +11,32 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include <random>
+
+#include "utilities.hpp"
 
 class Node {
     std::vector<double> weights;
     double bias;
     std::vector<double> accWeightNudges;
     double accBiasNudge;
+    double output;
     int trainingCounter;
     static double activationFunction(double input);
     static double derivedActivationFunction(double input);
-    static double getRandom();
+    
 public:
-//    Node(std::vector<double> weights, double bias);
+    double delta;
+    Node(const std::vector<double> weights, const double bias);
     Node(const int numberOfWeights);
-    Node(const std::vector<double> weightsData);
     double compute(const std::vector<double>& values) const;
     void print() const;
     std::vector<double> train(const std::vector<double>& previousLayerValues, const double& wantedResult);
     void adjustWeights();
     std::string serialize() const;
+    double getOutput() const;
+    double forwardPropagate(const std::vector<double>& inputs, auto activationFunction(double input) -> double);
+    double getWeight(int index) const;
+    void updateWeights(const std::vector<double>& input, const double learningRate);
 };
 
 #endif /* node_hpp */

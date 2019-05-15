@@ -15,22 +15,26 @@
 
 //#include "node.hpp"
 #include "layer.hpp"
-#include "input_layer.hpp"
+#include "hidden_layer.hpp"
+#include "output_layer.hpp"
 
 class NeuralNet {
-    std::vector<std::unique_ptr<Layer>> layers;
-    
-    double computeError(const std::vector<double>& img, const uint8_t& label) const;
-    void train(const std::vector<double>& img, const uint8_t& label);
-    void adjustWeights();
+    int epochs;
+    OutputLayer outputLayer;
+    std::vector<HiddenLayer> hiddenLayers;
 public:
     NeuralNet(const int inputLength, const int hiddenLayer, const int hiddenLayerSize, const int outputLength);
     NeuralNet(const std::string filePath, const int inputLength);
-    std::vector<double> compute(const std::vector<double>& inputs) const;
-    uint8_t predict(const std::vector<double>& img) const;
-    void train(const std::vector<std::vector<double>>& images, const std::vector<uint8_t>& label, const int& batchSize);
-    double computeAvgError(const std::vector<std::vector<double>>& images, const std::vector<uint8_t>& label);
+    double computeError(const std::vector<double>& img, const uint8_t& label);
+    uint8_t predict(const std::vector<double>& img);
+    double trainEpoch(const std::vector<std::vector<double>>& images, const std::vector<uint8_t>& label, const double learningRate);
     void writeToFile(std::string filePath);
+    std::vector<double> forwardPropagate(const std::vector<double>& inputs);
+    void backwardPropagate(std::vector<double>& expected);
+    void backwardPropagate(uint8_t expected);
+    void updateWeights(const std::vector<double>& input, const double learningRate);
+    int getEpochs() const;
+    double test(const std::vector<std::vector<double>>& testImages, std::vector<uint8_t>& testLabels);
 };
 
 

@@ -17,16 +17,19 @@
 
 class Layer {
 protected:
-    std::vector<Node> nodes;
+//    static auto activationFunction(double input) -> double;
+//    static auto transferDerivative(double output) -> double;
 public:
+    std::vector<Node> nodes;
     Layer(const int size, const int previousSize);
     Layer(const std::string layerData);
     virtual ~Layer();
     virtual std::vector<double> compute(const std::vector<double>& values) const;
     void print() const;
     std::vector<double> train(const std::vector<double>& previousLayerValues, const std::vector<double>& wantedValues);
-    void adjustWeights();
     virtual std::string serialize() const;
+    virtual std::vector<double> forwardPropagate(const std::vector<double>& values) = 0;
+    std::vector<double> updateWeights(const std::vector<double>& input, const double learningRate);
 };
 
 #endif /* layer_hpp */

@@ -19,20 +19,26 @@ Layer::Layer(const int size, const int previousSize) {
 Layer::Layer(const string layerData) {
     
     istringstream layerStream(layerData);
-    string weights;
+    string weightsString;
     
-    while (getline(layerStream , weights)) {
+    while (getline(layerStream , weightsString)) {
         
-        istringstream weightsStream(weights);
-        string weight;
+        istringstream weightsStream(weightsString);
         
-        vector<double> weightsData;
+        // bias
+        string biasString;
+        getline(weightsStream, biasString, ' ');
+        double bias = stod(biasString);
         
-        while (getline(weightsStream, weight, ' ')) {
-            weightsData.emplace_back(stod(weight));
+        // weights
+        string weightString;
+        vector<double> weights;
+        
+        while (getline(weightsStream, weightString, ' ')) {
+            weights.emplace_back(stod(weightString));
         }
         
-        nodes.emplace_back(Node(weightsData));
+        nodes.emplace_back(Node(weights, bias));
     }
     
 }
@@ -72,7 +78,7 @@ vector<double> Layer::train(const std::vector<double>& previousLayerValues, cons
         assert(result.size() == accResult.size());
         
         for (int j = 0; j < result.size(); j++) {
-            accResult[i] += result[i];
+            accResult[j] += result[j];
         }
     }
     
@@ -81,14 +87,6 @@ vector<double> Layer::train(const std::vector<double>& previousLayerValues, cons
     }
     
     return accResult;
-    
-}
-
-void Layer::adjustWeights() {
-    
-    for (Node& node: nodes) {
-        node.adjustWeights();
-    }
     
 }
 
@@ -101,3 +99,40 @@ string Layer::serialize() const
     
     return text;
 }
+
+//vector<double> Layer::forwardPropagate(const vector<double>& values)
+//{
+//    
+//    vector<double> result(nodes.size());
+//
+//    transform(nodes.begin(), nodes.end(), result.begin(), [&](Node& node) {
+//        return node.forwardPropagate(values, activationFunction);
+//    });
+//    
+//    return result;
+//    
+//}
+
+//double Layer::activationFunction(double input)
+//{
+//    return Utilities::sigmoid(input);
+//}
+//
+//double Layer::transferDerivative(double output)
+//{
+//    return Utilities::sigmoidTransferDerivative(output);
+//}
+
+vector<double> Layer::updateWeights(const vector<double>& input, const double learningRate)
+{
+    
+    vector<double> result;
+    
+    for (int i = 0; i < nodes.size(); i++) {
+        result.push_back(nodes[i].getOutput());
+        nodes[i].updateWeights(input, learningRate);
+    }
+    
+    return result;
+}
+

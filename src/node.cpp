@@ -9,13 +9,14 @@
 
 using namespace std;
 
-//Node::Node(vector<double> weights, double bias)
-//: weights(weights)
-//, bias(bias)
-//, accWeightNudges(weights.size(), 0.0)
-//, accBiasNudge(0.0)
-//, trainingCounter(0)
-//{}
+Node::Node(const vector<double> weights, const double bias)
+: weights(weights)
+, bias(bias)
+, accWeightNudges(weights.size(), 0.0)
+, accBiasNudge(0.0)
+, trainingCounter(0)
+
+{}
 
 Node::Node(const int numberOfWeights)
 : accWeightNudges(numberOfWeights, 0.0)
@@ -23,24 +24,9 @@ Node::Node(const int numberOfWeights)
 , trainingCounter(0)
 {
     for (int i = 0; i < numberOfWeights; i++) {
-        weights.push_back(getRandom());
+        weights.push_back(Utilities::getRandomDouble(-1.0, 1.0));
     }
-    bias = getRandom();
-}
-
-Node::Node(const vector<double> weightsData)
-: accWeightNudges(weightsData.size() - 1, 0.0) // - 1, because first value is bias
-, accBiasNudge(0.0)
-, trainingCounter(0)
-{
-    
-    bias = weightsData[0];
-    
-    // start at one, first value is bias
-    for (int i = 1; i < weightsData.size(); i++) {
-        weights.push_back(weightsData[i]);
-    }
-    
+    bias = Utilities::getRandomDouble(-1.0, 1.0);
 }
 
 double sumOfProducts(const vector<double>& a, const vector<double>& b) {
@@ -76,18 +62,14 @@ double Node::activationFunction(double input){
 }
 
 double Node::derivedActivationFunction(double input){
+//    return input * (1.0 - input);
     return exp(-input) / pow(1 + exp(-input), 2.0);
 //    return input > 0 ? 1.0 : 0.0;
 }
 
-double Node::getRandom(){
-    static mt19937 mt(1.0);
-    static uniform_real_distribution<double> dist(-1.0, 1.0);
-    return dist(mt);
-}
-
 vector<double> Node::train(const vector<double>& previousLayerValues, const double& wantedResult)
 {
+    output = compute(previousLayerValues);
     
     double zL = sumOfProducts(weights, previousLayerValues) + bias;
     
@@ -130,14 +112,16 @@ vector<double> Node::train(const vector<double>& previousLayerValues, const doub
 
 void Node::adjustWeights(){
     
+    double factor = 0.01;
+    
     if(trainingCounter == 0) {
         return;
     }
     
     for (int i = 0; i < weights.size(); i++) {
-        weights[i] -= accWeightNudges[i] / trainingCounter;
+        weights[i] -= factor * (accWeightNudges[i] / trainingCounter);
     }
-    bias -= accBiasNudge / trainingCounter;
+    bias -= factor * (accBiasNudge / trainingCounter);
     
     trainingCounter = 0;
     accBiasNudge = 0;
@@ -147,13 +131,45 @@ void Node::adjustWeights(){
 
 string Node::serialize() const
 {
-    string text = to_string(bias);
+    string text = Utilities::doubleToString(bias);
     
     for (int i = 0; i < weights.size(); i++) {
-        text += " " + to_string(weights[i]);
+        text += " " + Utilities::doubleToString(weights[i]);
     }
     
     text += "\n";
     
     return text;
+}
+
+double Node::getOutput() const
+{
+    return output;
+}
+
+double Node::forwardPropagate(const vector<double>& inputs, auto activationFunction(double input) -> double)
+{
+    assert(inputs.size() == weights.size());
+    
+    output = activationFunction(sumOfProducts(inputs, weights) + bias);
+    
+    return output;
+}
+
+double Node::getWeight(int index) const
+{
+    return weights[index];
+}
+
+void Node::updateWeights(const vector<double>& input, const double learningRate)
+{
+    
+    assert(input.size() == weights.size());
+    
+    bias += learningRate * delta;
+    
+    for (int i = 0; i < weights.size(); i++) {
+        weights[i] += learningRate * delta * input[i];
+    }
+    
 }
